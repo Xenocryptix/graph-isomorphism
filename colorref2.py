@@ -1,4 +1,5 @@
 from graph_io import load_graph
+import time
 
 """
 colorref by Rudolfs
@@ -83,5 +84,10 @@ def basic_colorref(path):
     colouring, iterations = color_refinement(graphs)
     result = partition(graphs, colouring, iterations)
 
+    print(result)
     return result
 
+if __name__ == '__main__':
+    time1 = time.time_ns()
+    basic_colorref('Benchmark_instances/CrefBenchmark2.grl')
+    print(time.time_ns() - time1) 

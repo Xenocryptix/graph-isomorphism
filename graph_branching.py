@@ -2,25 +2,28 @@ from graph import *
 from graph_io import *
 import time
 
-def basic_colorref(path):
-    with open(path) as f:
-        L = load_graph(f,read_list=True)
-    
-    color = []
-    next_color = 0
+with open('SampleGraphsBasicColorRefinement/colorref_smallexample_6_15.grl') as f:
+    L = load_graph(f,read_list=True)
+
+def initial_coloring(L):
     for G in L[0]:
         for v in G.vertices:
             v.label = v.degree
-            next_color = max(next_color, v.label)
-        color.append(set([v.label for v in G.vertices]))
+    return L
 
+def color_refinement(L):
+    color = []
+    next_color = 0
+    for G in L[0]:
+        next_color = max([v.label for v in G.vertices])
+        color.append(set([v.label for v in G.vertices]))
+    
     prev_len = [0] * len(L[0])
     next_color += 1
     iter = [1] * len(L[0])
 
     while prev_len != [len(c) for c in color]:
         prev_len = [len(c) for c in color]
-        change = [0] * len(L[0])
         color_map = dict()
         for G in L[0]:
             i = L[0].index(G)
@@ -36,19 +39,18 @@ def basic_colorref(path):
             color[i] = set([v.label for v in G.vertices])
             if (prev_len[i] != len(color[i])):
                 iter[i] += 1
-
-    graph_dict = dict()
+    
+def print_result(L):
     for G in L[0]:
-        i = L[0].index(G)
-        col = sorted([v.label for v in G.vertices])
-        if (str(col) not in graph_dict):
-            graph_dict[str(col)] = tuple([[], iter[i], len(col) == len(set(col))])
-        graph_dict[str(col)][0].append(i)
-    result = list(graph_dict.values())
-    print(result)
-    return result
+        print(sorted([v.label for v in G.vertices]))
 
-if __name__ == '__main__':
-    time1 = time.time_ns()
-    basic_colorref('Benchmark_instances/CrefBenchmark2.grl')
-    print(time.time_ns() - time1) 
+def count_isomorphism(L):
+    G = L[0][0]
+    col = sorted([v.label for v in G.vertices])
+    
+
+initial_coloring(L)
+color_refinement(L)
+
+L_0 = [[L[0][4], L[0][5]]]
+print_result(L_0)                
