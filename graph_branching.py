@@ -1,3 +1,4 @@
+from collections import Counter
 from graph import *
 from graph_io import *
 import time
@@ -44,13 +45,21 @@ def print_result(L):
     for G in L[0]:
         print(sorted([v.label for v in G.vertices]))
 
-def count_isomorphism(L):
-    G = L[0][0]
-    col = sorted([v.label for v in G.vertices])
+def grouping(L):
+    graph_dict = dict()
+    for G in L[0]:
+        i = L[0].index(G)
+        col = sorted([v.label for v in G.vertices])
+        if (str(col) not in graph_dict):
+            graph_dict[str(col)] = []
+        graph_dict[str(col)].append(i)
+    result = list(graph_dict.values())
+    print(result)
+    return result
     
 
 initial_coloring(L)
 color_refinement(L)
+grouping(L)
 
-L_0 = [[L[0][4], L[0][5]]]
-print_result(L_0)                
+# print_result(L)                
