@@ -85,7 +85,7 @@ def count_isomorphism(G_x, G_y):
             for y in y_color:
                 x.label, y.label = next_color
                 color_refinement([graph_x, graph_y]) 
-                #TODO: the above line is pseudocode, the function might need to return something is assigned to both graphs
+                #TODO: the above line is pseudocode, the function might need to return a value which is assigned to both graphs
                 num += count_isomorphism(graph_x, graph_y)
 
 
