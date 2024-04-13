@@ -3,7 +3,7 @@ from graph import *
 from graph_io import *
 import time
 
-with open('SampleGraphsBasicColorRefinement/colorref_smallexample_6_15.grl') as f:
+with open('SampleGraphSetBranching/torus24.grl') as f:
     L = load_graph(f,read_list=True)
 
 def initial_coloring(L):
@@ -56,10 +56,43 @@ def grouping(L):
     result = list(graph_dict.values())
     print(result)
     return result
+
+def count_isomorphism(G_x, G_y):
+    #For counting automorphisms, G_x == G_y 
+    x_color = sorted([v.label for v in G_x.vertices])
+    y_color = sorted([v.label for v in G_y.vertices])
+    if x_color != y_color: #unbalanced    
+        return 0
+    elif len(v_x) == len(set(v_x)): #bijective
+        return 1
     
+    graph_x = G_x.copy()
+    graph_y = G_y.copy()
+    v_x = {}
+    v_y = {}
+    for v in graph_x.vertices:
+        v_x[v.label].append(v)
+    for v in graph_y.vertices:
+        v_y[v.label].append(v)
+    next_color = max([v.label for v in graph_x.vertices]) + 1
+    num = 0
+    for v in v_x:
+        x_color = v_x[v]
+        y_color = v_y[v]
+        if len(x_color) < 2:
+            continue
+        for x in x_color:
+            for y in y_color:
+                x.label, y.label = next_color
+                color_refinement([graph_x, graph_y]) 
+                #TODO: the above line is pseudocode, the function might need to return something is assigned to both graphs
+                num += count_isomorphism(graph_x, graph_y)
+
 
 initial_coloring(L)
 color_refinement(L)
 grouping(L)
 
-# print_result(L)                
+# print_result(L)    
+
+# For #Aut problem, group the graphs on their number of automorphisms            

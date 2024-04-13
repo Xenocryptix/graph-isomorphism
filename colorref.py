@@ -42,12 +42,12 @@ def basic_colorref(path):
         i = L[0].index(G)
         col = sorted([v.label for v in G.vertices])
         if (str(col) not in graph_dict):
-            graph_dict[str(col)] = []
-        graph_dict[str(col)].append(i)
+            graph_dict[str(col)] = tuple([[], iter[i], len(col) == len(set(col))])
+        graph_dict[str(col)][0].append(i)
     result = list(graph_dict.values())
     print(result)
     return result
 
 if __name__ == '__main__':
     time1 = time.time_ns()
-    basic_colorref('SampleGraphsBasicColorRefinement/colorref_smallexample_6_15.grl')
+    basic_colorref('SampleGraphSetBranching/torus24.grl')
