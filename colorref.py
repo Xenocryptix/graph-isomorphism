@@ -50,4 +50,4 @@ def basic_colorref(path):
 
 if __name__ == '__main__':
     time1 = time.time_ns()
-    basic_colorref('SampleGraphSetBranching/torus24.grl')
+    basic_colorref('SampleGraphsBasicColorRefinement/colorref_smallexample_6_15.grl')

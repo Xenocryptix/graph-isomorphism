@@ -7,6 +7,12 @@ with open('SampleGraphSetBranching/torus24.grl') as f:
     L_list = load_graph(f,read_list=True)
 L = L_list[0]
 
+def uniform_coloring(L):
+    for G in L:
+        for v in G.vertices:
+            v.label = 0
+    return L
+
 def initial_coloring(L):
     for G in L:
         for v in G.vertices:
@@ -22,7 +28,6 @@ def color_refinement(L):
     
     prev_len = [0] * len(L)
     next_color += 1
-    iter = [1] * len(L)
 
     while prev_len != [len(c) for c in color]:
         prev_len = [len(c) for c in color]
@@ -39,8 +44,6 @@ def color_refinement(L):
             for v in G.vertices:
                 v.label = new_color[v]
             color[i] = set([v.label for v in G.vertices])
-            if (prev_len[i] != len(color[i])):
-                iter[i] += 1
     return L
     
 def print_result(L):
@@ -59,7 +62,48 @@ def grouping(L):
     print(result)
     return result
 
-def count_isomorphism(G_x, G_y):
+def get_class(L):
+    color = {}
+    for G in L:
+        for v in G.vertices:
+            if v.label not in color.keys():
+                color[v.label] = 1
+            else:
+                color[v.label] += 1
+                if color[v.label] >= 4:
+                    return v.label
+
+def count_isomorphism(g: Graph, h: Graph, d: list[Vertex] = [], i: list[Vertex] = []) -> int:
+    ref = color_refinement([g, h])
+    g_color = sorted([v.label for v in g.vertices])
+    h_color = sorted([v.label for v in h.vertices])
+    if g_color != h_color: #unbalanced    
+        return 0
+    elif len(g_color) == len(set(h_color)): #bijective
+        return 1
+    
+    c = get_class([g, h])
+    next_color = max(g_color) + 1
+
+    for v in g:
+        if v.label == c and v not in d:
+            x = v
+            break
+    num = 0
+    for v in h:
+        if v.label == c and v not in i:
+            g1 = copy.deepcopy(g)
+            h1 = copy.deepcopy(h)
+            g1.vertices[g.vertices.index(x)].label = next_color
+            h1.vertices[h.vertices.index(v)].label = next_color
+            d1 = d[::]
+            i1 = i[::]
+            d1.append(x)
+            i1.append(v)
+            num += count_isomorphism(g1, h1, d1, i1)
+    return num
+
+def count_isomorphism_2(G_x, G_y):
     #For counting automorphisms, G_x == G_y 
     x_color = sorted([v.label for v in G_x.vertices])
     y_color = sorted([v.label for v in G_y.vertices])
@@ -85,19 +129,25 @@ def count_isomorphism(G_x, G_y):
             continue
         for x in x_col:
             for y in y_col:
+                tmp = x.label
                 x.label = next_color
                 y.label = next_color
                 ref = color_refinement([graph_x, graph_y]) 
-                graph_x = ref[0]
-                graph_y = ref[1]
-                num += count_isomorphism(graph_x, graph_y)
+                ref_x = ref[0]
+                ref_y = ref[1]
+                x.label = tmp
+                y.label = tmp
+                num += count_isomorphism(ref_x, ref_y)
+                #Revert coloring
         return num
 
 initial_coloring(L)
 color_refinement(L)
-grouping(L)   
+# grouping(L)   
 
-a = count_isomorphism(L[3], L[3])
+# uniform_coloring(L)
+a = count_isomorphism(L[0], L[0])
 print(a)
+
 
 # For #Aut problem, group the graphs on their number of automorphisms            
