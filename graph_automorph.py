@@ -1,4 +1,5 @@
 from graph_io import load_graph
+from graph import Graph
 import time
 
 
@@ -30,7 +31,7 @@ def color_refinement(graphs, coloring_init):
 
             if (len(set(coloring_new.values())) != len(set(coloring[graph].values()))):
                 refined = True
-
+            
             coloring[graph] = coloring_new
         
     return coloring
@@ -49,71 +50,47 @@ def partition(graphs, coloring):
 
 
 def count_isomorphism(D, I, G, H, coloring, depth=0):
-    g_colors = sorted([coloring[G][v] for v in G.vertices])
-    h_colors = sorted([coloring[H][v] for v in H.vertices])
-    balanced = g_colors == h_colors
-    bijection = len(g_colors) == len(set(g_colors))
+    # new_coloring = {g: {v: coloring[g][v] for v in g.vertices} for g in [G, H]}
+    new_coloring = color_refinement([G, H], coloring)
 
-    # Debug print statements
+    g_colors = sorted([new_coloring[G][v] for v in G.vertices])
+    h_colors = sorted([new_coloring[H][v] for v in H.vertices])
+    balanced = g_colors == h_colors
+    bijection = len(g_colors) == len(set(h_colors))
     
     if not balanced:
         return 0
 
-    # print()
-    # print('Depth: ', depth)
-    # print('G col: ', g_colors)
-    # print('H col: ', h_colors)
-    # print('D: ', [v.label for v in D])
-    # print('I: ', [v.label for v in I])
-    # print('Balanced: ', g_colors == h_colors)
-    # print('Bijection: ', bijection)
-    # if depth > 3: return
-
     if bijection:
         return 1
 
-    C_G, C_H = {}, {}
+    
+    next_color = max(h_colors) + 1
+    # find a color with more than one vertex in G
+    for i in range(1, len(g_colors)):
+        if g_colors[i] == g_colors[i - 1]:
+            color = g_colors[i]
+            break
+
+    x = None
     for v in G.vertices:
-        C_G.setdefault(coloring[G][v], []).append(v)
-    for v in H.vertices:
-        C_H.setdefault(coloring[H][v], []).append(v)
-
-    next_color = max(g_colors) + 1
-
-    colors_sorted_by_vertex_count = sorted(C_G.keys(), key=lambda color: len(C_G[color]))
-
+        if new_coloring[G][v] == color and v not in D:
+            x = v
+            break
+    
     num = 0
-    i = 0
-    for color in C_G:
-        if len(C_G[color]) < 2:
-            continue
-        
-        for v in C_G[color]:
-            # if v in D:
-            #     continue
-            for w in C_H[color]:
-                # if w in I:
-                #     continue
-                start_coloring = {G: {}, H: {}}
-                
-                for g in [G, H]:
-                    for u in g.vertices:
-                        if u not in D and u not in I:
-                            start_coloring[g][u] = 0
-                        else:
-                            start_coloring[g][u] = coloring[g][u]
-                
-                start_coloring[G][v] = next_color
-                start_coloring[H][w] = next_color
-
-                alpha = color_refinement([G, H], start_coloring)
-
-                num += count_isomorphism(D + [v], I + [w], G, H, alpha, depth + 1)
-                
-                
-                if num > 0: return num # return as soon as we find an isomorphism
-
+    for v in H.vertices:
+        if new_coloring[G][v] == color and v not in I:
+            # test_coloring = {g: {v: new_coloring[g][v] for v in g.vertices} for g in [G, H]}
+            new_coloring[H][v] = next_color
+            new_coloring[G][x] = next_color
+            d1 = D[:]
+            d1.append(x)
+            i1 = I[:]
+            i1.append(v)
+            num += count_isomorphism(d1, i1, G, H, new_coloring, depth + 1)
     return num
+            
 
 
 def find_isomorphisms(graphs, coloring, all_graphs):
@@ -141,26 +118,26 @@ def classify(path):
     # print(eq_classes)
 
     # for testing a single pair
-    # print(count_isomorphism([], [], graphs[0], graphs[0], coloring))
+    print(count_isomorphism([], [], graphs[1], graphs[1], coloring))
     
-    isomorphisms = []
-    for cl in eq_classes:
-        if not cl[1]:
-            print(f'Checking set: {[graphs.index(i) for i in cl[0]]}')
-            pairs = find_isomorphisms(cl[0], coloring, graphs)
-            isomorphisms.extend(pairs)
+    # isomorphisms = []
+    # for cl in eq_classes:
+    #     if not cl[1]:
+    #         print(f'Checking set: {[graphs.index(i) for i in cl[0]]}')
+    #         pairs = find_isomorphisms(cl[0], coloring, graphs)
+    #         isomorphisms.extend(pairs)
    
-        else:
-            isomorphisms.append(tuple(cl[0]))
+    #     else:
+    #         isomorphisms.append(tuple(cl[0]))
 
     
-    for pair in isomorphisms:
-        print('---------------', [graphs.index(g) for g in pair], '---------------')
+    # for pair in isomorphisms:
+    #     print('---------------', [graphs.index(g) for g in pair], '---------------')
 
 
 if __name__ == '__main__':
     start_time = time.time()
-    classify('SampleGraphSetBranching/cubes6.grl')
+    classify('SampleGraphSetBranching/torus72.grl')
     end_time = time.time()
 
     execution_time = end_time - start_time
