@@ -84,3 +84,17 @@ def find_isomorphisms(graphs, coloring):
                 isomorphic_pairs.append((graphs[i], graphs[j]))
 
     return isomorphic_pairs
+
+def group_isomorphic(graphs, coloring):
+    groups = []
+    for i in range(len(graphs)):
+        found = False
+        for group in groups:
+            is_isomorphic = count_isomorphisms([], [], graphs[group[0]], graphs[i], coloring, False)
+            if is_isomorphic:
+                group.append(i)
+                found = True
+        if not found:
+            groups.append([i])
+            
+    return [val for val in groups]
