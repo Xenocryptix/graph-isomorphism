@@ -49,10 +49,7 @@ class Vertex(object):
         A programmer-friendly representation of the vertex.
         :return: The string to approximate the constructor arguments of the `Vertex'
         """
-        try:
-            return 'Vertex(label={}, color={}, #incident={})'.format(self.label, self.colornum, len(self._incidence))
-        except AttributeError:
-            return 'Vertex(label={}, #incident={})'.format(self.label, len(self._incidence))
+        return 'Vertex(label={}, #incident={})'.format(self.label, len(self._incidence))
 
     def __str__(self) -> str:
         """
@@ -315,39 +312,6 @@ class Graph(object):
 
         edge.head._add_incidence(edge)
         edge.tail._add_incidence(edge)
-
-    def __add__(self, other: "Graph") -> "Graph":
-        """
-        Make a disjoint union of two graphs.
-        :param other: Graph to add to `self'.
-        :return: New graph which is a disjoint union of `self' and `other'.
-        """
-        graph = Graph(self.directed)
-        dict = {}
-
-        # Create new vertices and add them to the new graph
-        for vertex in (self.vertices + other.vertices):
-            new_vertex = Vertex(graph, vertex.label)
-            try:
-                new_vertex.colornum = vertex.colornum
-            except AttributeError:
-                pass
-
-            try:
-                new_vertex.pre_labeled = vertex.pre_labeled
-            except AttributeError:
-                pass
-            dict[vertex] = new_vertex
-            graph.add_vertex(new_vertex)
-
-        # Add the edges to the new graph
-        for old_edge in (self.edges + other.edges):
-            tail = old_edge.tail
-            head = old_edge.head
-            new_edge = Edge(dict.get(tail), dict.get(head))
-            graph.add_edge(new_edge)
-
-        return graph
 
     def __iadd__(self, other: Union[Edge, Vertex]) -> "Graph":
         """

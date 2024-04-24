@@ -1,53 +1,60 @@
-from graph import *
-from graph_io import *
-import time
+from graph import Graph, Vertex
 
-def basic_colorref(path):
-    with open(path) as f:
-        L = load_graph(f,read_list=True)
+
+def colorref(graphs, coloring):
+    vertices = [vert for graph in graphs for vert in graph.vertices]
+
+    new_coloring = {graph: dict(coloring[graph]) for graph in graphs}
+
+    refined = True
+    while refined:
+        refined = False
+
+        color_classes = {}
+        for v in vertices:
+            color = new_coloring[v.graph][v]
+            color_classes.setdefault(color, []).append(v)
+
+        color_changes = {}
+        
+        for color, same_col_verts in color_classes.items():
+            new_colors = {}
+            for v in same_col_verts:
+                added = False
+
+                for verts in new_colors.values():
+                    if len(v.neighbours) == len(verts[0].neighbours):
+                        v2 = verts[0]
+
+                        s1 = tuple(sorted([new_coloring[v.graph][n] for n in v.neighbours]))
+                        s2 = tuple(sorted([new_coloring[v2.graph][n] for n in v2.neighbours]))
+
+                        if s1 == s2:
+                            verts.append(v)
+                            added = True
+                            break
+                
+                if not added:
+                    new_colors[len(new_colors.keys())] = [v]
+
+                if len(new_colors.keys()) > 1:
+                    refined = True
+
+            for verts in new_colors.values():
+                color_changes[len(color_changes.keys())] = verts
+
+        for color, verts in color_changes.items():
+            for v in verts:
+                new_coloring[v.graph][v] = color
+
     
-    color = []
-    next_color = 0
-    for G in L[0]:
-        for v in G.vertices:
-            v.label = v.degree
-            next_color = max(next_color, v.label)
-        color.append(set([v.label for v in G.vertices]))
+    return new_coloring
 
-    prev_len = [0] * len(L[0])
-    next_color += 1
-    iter = [1] * len(L[0])
 
-    while prev_len != [len(c) for c in color]:
-        prev_len = [len(c) for c in color]
-        change = [0] * len(L[0])
-        color_map = dict()
-        for G in L[0]:
-            i = L[0].index(G)
-            new_color = dict()
-            for v in G.vertices:
-                neighbor_colors = tuple(sorted([v.label for v in v.neighbours]))
-                if neighbor_colors not in color_map:
-                    color_map[neighbor_colors] = next_color
-                    next_color += 1
-                new_color[v] = color_map[neighbor_colors]
-            for v in G.vertices:
-                v.label = new_color[v]
-            color[i] = set([v.label for v in G.vertices])
-            if (prev_len[i] != len(color[i])):
-                iter[i] += 1
-
-    graph_dict = dict()
-    for G in L[0]:
-        i = L[0].index(G)
-        col = sorted([v.label for v in G.vertices])
-        if (str(col) not in graph_dict):
-            graph_dict[str(col)] = tuple([[], iter[i], len(col) == len(set(col))])
-        graph_dict[str(col)][0].append(i)
-    result = list(graph_dict.values())
-    print(result)
-    return result
-
-if __name__ == '__main__':
-    time1 = time.time_ns()
-    basic_colorref('SampleGraphsBasicColorRefinement/colorref_smallexample_6_15.grl')
+def partition(coloring):
+    partitions = {}
+    for graph in coloring.keys():
+        vert_colors = sorted(coloring[graph].values())
+        partitions.setdefault(tuple(vert_colors), []).append(graph)
+    
+    return [(gr, len(set(col)) == len(col)) for col, gr in partitions.items()]
