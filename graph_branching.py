@@ -4,7 +4,7 @@ from graph_io import *
 import copy
 # from color_refinement import color_refinement
 
-with open('SampleGraphSetBranching/products216.grl') as f:
+with open('basic/basic02GI.grl') as f:
     L_list = load_graph(f,read_list=True)
 L = L_list[0]
 
@@ -89,7 +89,7 @@ def get_class(L):
                 if color[v.colornum] >= 4:
                     return v.colornum
 
-def count_isomorphism(g: Graph, h: Graph, d: list[Vertex] = [], i: list[Vertex] = []) -> int:
+def count_isomorphism(g, h, d, i):
     ref = color_refinement([g, h])
     g_color = sorted([v.colornum for v in g.vertices])
     h_color = sorted([v.colornum for v in h.vertices])
@@ -120,15 +120,64 @@ def count_isomorphism(g: Graph, h: Graph, d: list[Vertex] = [], i: list[Vertex] 
     return num
 
 
+def check_isomorphism(g, h, d, i):
+    ref = color_refinement([g, h])
+    g_color = sorted([v.colornum for v in g.vertices])
+    h_color = sorted([v.colornum for v in h.vertices])
+    if g_color != h_color: #unbalanced    
+        return False
+    elif len(g_color) == len(set(h_color)): #bijective
+        return True
+    
+    c = get_class([g, h])
+    next_color = max(g_color) + 1
+
+    for v in g:
+        if v.colornum == c and v not in d:
+            x = v
+            break
+    for v in h:
+        if v.colornum == c and v not in i:
+            g1 = Graph(False) + g
+            h1 = Graph(False) + h
+            g1.vertices[g.vertices.index(x)].colornum = next_color
+            h1.vertices[h.vertices.index(v)].colornum = next_color
+            d1 = d[::]
+            i1 = i[::]
+            d1.append(x)
+            i1.append(v)
+            if check_isomorphism(g1, h1, d1, i1):
+                return True
+
 initial_coloring(L)
 color_refinement(L)
-# grouping(L)   
-# uniform_coloring(L)
-# print(count_isomorphism(L[0], L[0]))
 
+print("Finding...")
+
+## GI-Aut
+# for i in range(len(L)):
+#     for j in range(len(L)):
+#         if i < j:
+#             number = count_isomorphism(L[i] + Graph(False), L[j] + Graph(False), [], [])
+#             if number > 0:
+#                 print(f"[{i}, {j}]: {number}\n")        
+
+## Aut
+# for i in range(len(L)):
+#     number = count_isomorphism(L[i] + Graph(False), L[i] + Graph(False), [], [])
+#     if number > 0:
+#         print(f"[{i}]: {number}\n")   
+
+## GI
+groups = []
 for i in range(len(L)):
-    for j in range(len(L)):
-        if i < j:
-            number = count_isomorphism(L[i] + Graph(False), L[j] + Graph(False))
-            if number > 0:
-                print(f"Found {number} isomorphisms between graphs {i} and {j}\n")        
+    added = False
+    for g in groups:
+        isomorphic = check_isomorphism(L[g[0]] + Graph(False), L[i] + Graph(False), [], [])
+        if isomorphic:
+            g.append(i)
+            added = True
+    if not added:
+        groups.append([i])
+for val in groups:
+    print(val)      
