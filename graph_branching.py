@@ -4,7 +4,8 @@ from graph_io import *
 import copy
 # from color_refinement import color_refinement
 
-with open('basic/basic02GI.grl') as f:
+# change input file here
+with open('basic/basic05Aut.grl') as f:
     L_list = load_graph(f,read_list=True)
 L = L_list[0]
 
@@ -154,30 +155,34 @@ color_refinement(L)
 
 print("Finding...")
 
-## GI-Aut
-# for i in range(len(L)):
-#     for j in range(len(L)):
-#         if i < j:
-#             number = count_isomorphism(L[i] + Graph(False), L[j] + Graph(False), [], [])
-#             if number > 0:
-#                 print(f"[{i}, {j}]: {number}\n")        
+def gi_aut(L):
+    for i in range(len(L)):
+        for j in range(len(L)):
+            if i < j:
+                number = count_isomorphism(L[i] + Graph(False), L[j] + Graph(False), [], [])
+                if number > 0:
+                    print(f"[{i}, {j}]: {number}\n")
 
-## Aut
-# for i in range(len(L)):
-#     number = count_isomorphism(L[i] + Graph(False), L[i] + Graph(False), [], [])
-#     if number > 0:
-#         print(f"[{i}]: {number}\n")   
+def automorphism(L):
+    for i in range(len(L)):
+        number = count_isomorphism(L[i] + Graph(False), L[i] + Graph(False), [], [])
+        if number > 0:
+            print(f"[{i}]: {number}\n")
 
-## GI
-groups = []
-for i in range(len(L)):
-    added = False
-    for g in groups:
-        isomorphic = check_isomorphism(L[g[0]] + Graph(False), L[i] + Graph(False), [], [])
-        if isomorphic:
-            g.append(i)
-            added = True
-    if not added:
-        groups.append([i])
-for val in groups:
-    print(val)      
+def isomorphism(L):
+    groups = []
+    for i in range(len(L)):
+        added = False
+        for g in groups:
+            isomorphic = check_isomorphism(L[g[0]] + Graph(False), L[i] + Graph(False), [], [])
+            if isomorphic:
+                g.append(i)
+                added = True
+        if not added:
+            groups.append([i])
+    for val in groups:
+        print(val)      
+
+# gi_aut(L)
+automorphism(L)
+# isomorphism(L)
