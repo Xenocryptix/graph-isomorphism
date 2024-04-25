@@ -1,42 +1,61 @@
-from colorref import colorref, partition
+from colorref import colorref
 from graph import Graph, Vertex, Edge
 
 
-def count_isomorphisms(D, I, G, H, coloring, count_mode=False):
-    coloring = colorref([G, H], coloring)
+def count_isomorphisms(d, i, g, h, coloring, count_mode=False):
+    """
+    Counts or checks the existence of isomorphisms between two graphs 
+    with sets of already distinguished vertices.
+    Parameters:
+        D (list): List of distinguished vertices in G.
+        I (list): List of distinguished vertices in H.
+        G (Graph): The first graph.
+        H (Graph): The second graph.
+        coloring (dict): Coloring dictionary for graphs.
+        count_mode (bool): If True, count all isomorphisms; otherwise, check if isomorphic only.
+    Returns:
+        int or bool: Number of isomorphisms or isomorphic flag.
+    """
+    coloring = colorref([g, h], coloring)
 
-    g_colors = sorted([coloring[G][v] for v in G.vertices])
-    h_colors = sorted([coloring[H][v] for v in H.vertices])
+    g_colors = sorted([coloring[g][v] for v in g.vertices])
+    h_colors = sorted([coloring[h][v] for v in h.vertices])
 
     if g_colors != h_colors:
         return 0 if count_mode else False
     if len(g_colors) == len(set(g_colors)):
         return 1 if count_mode else True
 
-    for i in range(1, len(g_colors)):
-        if g_colors[i] == g_colors[i - 1]:
-            C = g_colors[i]
+    # We know that g_colors is sorted and equal to h_colors,
+    # so a repeated color means a color class with >= 4 vertices
+    for idx in range(1, len(g_colors)):
+        if g_colors[idx] == g_colors[idx - 1]:
+            color = g_colors[idx]
             break
 
-    next_color = max(max(coloring[G].values()), max(coloring[H].values())) + 1
+    next_color = max(g_colors + h_colors) + 1
 
-    for vert in G:
-        if coloring[G][vert] == C and vert not in D:
+    for vert in g:
+        if coloring[g][vert] == color and vert not in d:
             vert_g = vert
             break
 
     num = 0
-    for vert in H:
-        if coloring[H][vert] == C and vert not in I:
+    for vert in h:
+        if coloring[h][vert] == color and vert not in i:
             vert_h = vert
 
-            new_coloring = {graph: dict(coloring[graph]) for graph in [G, H]}
+            # Deep copy of coloring
+            new_coloring = {graph: dict(coloring[graph]) for graph in [g, h]}
 
-            new_coloring[G][vert_g] = next_color
-            new_coloring[H][vert_h] = next_color
+            # Change the coloring by coloring the two selected vertices the same (distinct) color
+            new_coloring[g][vert_g] = next_color
+            new_coloring[h][vert_h] = next_color
 
             count = count_isomorphisms(
-                D + [vert_g], I + [vert_h], G, H, new_coloring, count_mode)
+                d + [vert_g], i + [vert_h], g, h, new_coloring, count_mode)
+
+            # Differentiate based on count_mode
             if count_mode:
                 num += count
             elif count:
@@ -46,6 +65,13 @@ def count_isomorphisms(D, I, G, H, coloring, count_mode=False):
 
 
 def duplicate_graph(graph):
+    """
+    Creates a duplicate of the given graph with seperate (identic) vertices and edges.
+    Parameters:
+        graph (Graph): The graph to duplicate.
+    Returns:
+        Graph: A new graph object that is a duplicate of the given graph.
+    """
     new_graph = Graph(False)
     verts = {}
     for vert in graph.vertices:
@@ -63,38 +89,42 @@ def duplicate_graph(graph):
     return new_graph
 
 
-def automorphisms(graph, coloring):
+def automorphisms(graph):
+    """
+    Counts the number of automorphisms of a graph.
+    Parameters:
+        graph (Graph): The graph to analyze.
+    Returns:
+        int: The number of automorphisms.
+    """
     copy = duplicate_graph(graph)
     coloring = {graph: {v: 0 for v in graph.vertices}
                 for graph in [graph, copy]}
 
-    count = count_isomorphisms(
-        [], [], graph, copy, coloring, True)
-    return count
+    return count_isomorphisms([], [], graph, copy, coloring, True)
 
 
-def find_isomorphisms(graphs, coloring):
-    isomorphic_pairs = []
-
-    for i in range(len(graphs)):
-        for j in range(i + 1, len(graphs)):
-            isomorphic = count_isomorphisms(
-                [], [], graphs[i], graphs[j], coloring, False)
-            if isomorphic:
-                isomorphic_pairs.append((graphs[i], graphs[j]))
-
-    return isomorphic_pairs
-
-def group_isomorphic(graphs, coloring):
+def group_isomorphic(graphs):
+    """
+    Groups graphs that are isomorphic to each other based on the provided coloring.
+    Parameters:
+        graphs (list): A list of graph objects.
+        coloring (dict): A coloring used to help determine isomorphisms.
+    Returns:
+        list: A list of lists, where each sublist contains indices of isomorphic graphs.
+    """
+    coloring = {graph: {vert: 0 for vert in graph.vertices}
+                for graph in graphs}
     groups = []
-    for i in range(len(graphs)):
+    for i, g in enumerate(graphs):
         found = False
         for group in groups:
-            is_isomorphic = count_isomorphisms([], [], graphs[group[0]], graphs[i], coloring, False)
+            is_isomorphic = count_isomorphisms(
+                [], [], graphs[group[0]], g, coloring, False)
             if is_isomorphic:
                 group.append(i)
                 found = True
         if not found:
             groups.append([i])
-            
-    return [val for val in groups]
+
+    return groups
